@@ -298,11 +298,10 @@ function reply(text) {
     setTimeout(() => {
       addMsg('So… where should we go first? 💕', 'left');
 
-       // ✅ Hide chatbox after conversation
-      chat.classList.add('hidden');
-      
-      // ✅ Show date choices
-      date.classList.remove('hidden');
+          setTimeout(() => {
+        chat.classList.add('hidden');      // hide chatbox
+        date.classList.remove('hidden');   // show date choices
+      }, 3000);
     }, 1000);
   }, 1000);
 }
