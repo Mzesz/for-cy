@@ -297,6 +297,11 @@ function reply(text) {
     addMsg('Yesss! lezgooo 😆🎉', 'left');
     setTimeout(() => {
       addMsg('So… where should we go first? 💕', 'left');
+
+       // ✅ Hide chatbox after conversation
+      chat.classList.add('hidden');
+      
+      // ✅ Show date choices
       date.classList.remove('hidden');
     }, 1000);
   }, 1000);
