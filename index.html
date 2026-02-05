@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Valentine</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#ff4d6d" />
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  height: 100vh;
+  font-family: "Poppins", Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  background: url("valentines.png") no-repeat center center / cover;
+}
+
+#app {
+  width: 92%;
+  max-width: 420px;
+  background: rgba(255,255,255,.95);
+  border-radius: 22px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 25px 50px rgba(0,0,0,.35);
+}
+
+.hidden { display: none; }
+
+button {
+  padding: 14px 20px;
+  font-size: 17px;
+  border: none;
+  border-radius: 14px;
+  margin: 6px;
+  cursor: pointer;
+  transition: .2s;
+}
+button:hover { transform: scale(1.06); }
+
+.yes { background:#4CAF50; color:white; }
+.no  { background:#f44336; color:white; position:relative; }
+
+.heart {
+  position:fixed;
+  width:34px;
+  height:34px;
+  background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 29.6"><path fill="%23ff4d6d" d="M16 29.6c-1-.6-21-12.6-16-20C5.7 5.6 10.3 4 16 11c5.7-7 10.3-5.4 16-2.6 5 7.4-15 19.6-16 20z"/></svg>');
+  animation:fall linear infinite;
+}
+
+@keyframes fall {
+  from { transform:translateY(-60px); }
+  to { transform:translateY(110vh); }
+}
+
+#noMessage {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #ff4d6d;
+  min-height: 18px;
+}
+
+#chat {
+  position:fixed;
+  bottom:16px;
+  width:92%;
+  max-width:420px;
+  background:white;
+  border-radius:20px;
+  padding:14px;
+  box-shadow:0 12px 30px rgba(0,0,0,.3);
+}
+
+.msg {
+  max-width:80%;
+  padding:10px 14px;
+  margin:8px 0;
+  border-radius:16px;
+}
+.left { background:#eee; }
+.right { background:#ffb6c1; margin-left:auto; }
+
+.reply {
+  display:inline-block;
+  background:#ffd1dc;
+  padding:8px 12px;
+  border-radius:12px;
+  margin:6px;
+  cursor:pointer;
+}
+
+#game {
+  position:relative;
+  height:200px;
+  margin-top:10px;
+  overflow:hidden;
+  border-radius:14px;
+  background:#fff0f5;
+}
+
+.catch {
+  position:absolute;
+  font-size:28px;
+  cursor:pointer;
+}
+
+#ending {
+  white-space:pre-line;
+  font-size:15px;
+  line-height:1.6;
+}
+</style>
+</head>
+
+<body>
+<audio id="teleportSound" src="teleport.mp3"></audio>
+<audio id="music" src="love-music.mp3" loop></audio>
+
+<div id="app">
+  <div id="intro">
+    <h2 id="question"></h2>
+    <button class="yes" id="yesBtn">YES 💖</button>
+    <button class="no" id="noBtn">NO 😈</button>
+    <div id="noMessage"></div>
+  </div>
+
+  <div id="mini" class="hidden">
+    <h3>Catch 5 hearts 💘</h3>
+    <div id="game"></div>
+  </div>
+
+  <div id="date" class="hidden">
+    <h3>Choose our date 💕</h3>
+    <button onclick="chooseDate('🍷 Proper Dinner Date')">🍷 Proper Dinner Date</button>
+    <button onclick="chooseDate('🎬 Movie Date')">🎬 Movie</button>
+    <button onclick="chooseDate('☕ Coffee')">☕ Coffee</button>
+    <button onclick="chooseDate('🎮 Arcade / games')">🎮 Arcade/games</button>
+    <button onclick="chooseDate('🎳 Bowling')">🎳 Bowling</button>
+    <button onclick="chooseDate('🎡 Carnival')">🎡 Carnival</button>
+</div>
+  <div id="ending"></div>
+</div>
+
+<div id="chat" class="hidden"></div>
+
+<script>
+/* CONFIG */
+const name = 'Cy';
+
+/* STATE */
+let noClicks = 0;
+let heartsCaught = 0;
+let dateChoice = '';
+let hesitationScore = 0;
+
+const noMessages = [
+  "Hmm… are you sure? 🤨",
+  "That NO sounded uncertain 😏",
+  "You hesitated. I felt it.",
+  "At this point you’re just flir   ting 😌",
+  "Okay wow, commitment to NO is impressive 😂",
+  "I’m running out of escape routes… 🫠"
+];
+
+function showNoMessage(text) {
+  let m = document.getElementById('noMessage');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = 'noMessage';
+    m.style.marginTop = '10px';
+    m.style.fontSize = '14px';
+    m.style.opacity = '0.85';
+    intro.appendChild(m);
+  }
+  m.innerText = text;
+}
+
+
+/* ELEMENTS */
+const question = document.getElementById('question');
+const noBtn = document.getElementById('noBtn');
+const yesBtn = document.getElementById('yesBtn');
+const noMessage = document.getElementById('noMessage');
+const intro = document.getElementById('intro');
+const mini = document.getElementById('mini');
+const chat = document.getElementById('chat');
+const date = document.getElementById('date');
+const ending = document.getElementById('ending');
+const teleportSound = document.getElementById('teleportSound');
+const music = document.getElementById('music');
+
+/* INIT */
+question.innerText = `Hi ${name} 🤭, will you be my Valentine? 💘`;
+
+/* NO BUTTON – EMOTION AWARE 😈 */
+noBtn.addEventListener('click', () => {
+  noClicks++;
+
+  teleportSound.currentTime = 0;
+  teleportSound.play();
+
+  showNoMessage(
+    noMessages[Math.min(noClicks - 1, noMessages.length - 1)]
+  );
+
+  // emotion-aware: slows down as clicks increase
+  const emotionFactor = Math.max(0.25, 1 - noClicks * 0.12);
+  noBtn.style.transition = `${emotionFactor}s`;
+
+  if (noClicks >= 7) {
+    noBtn.disabled = true;
+    noBtn.style.opacity = '0.6';
+    showNoMessage("Okay okay 😵‍💫 I’m tired… NO is on cooldown now. Just click yes please 🥺");
+    return;
+  }
+
+  noBtn.style.position = 'absolute';
+  noBtn.style.left = Math.random() * 80 + '%';
+  noBtn.style.top  = Math.random() * 80 + '%';
+});
+
+/* YES */
+yesBtn.addEventListener('click', () => {
+  music.play();
+  intro.classList.add('hidden');
+  mini.classList.remove('hidden');
+  startMiniGame();
+});
+
+/* MINI GAME */
+function startMiniGame() {
+  const game = document.getElementById('game');
+  const spawn = setInterval(() => {
+    const h = document.createElement('div');
+    h.className = 'catch';
+    h.innerText = '💖';
+    h.style.left = Math.random() * 85 + '%';
+    h.style.top = Math.random() * 80 + '%';
+    h.onclick = () => {
+      heartsCaught++;
+      h.remove();
+      if (heartsCaught >= 5) {
+        clearInterval(spawn);
+        mini.classList.add('hidden');
+        startChat();
+      }
+    };
+    game.appendChild(h);
+  }, 700);
+}
+
+/* CHAT */
+function startChat() {
+  chat.classList.remove('hidden');
+  addMsg('Ooooh… you actually said YES 😏💖', 'left');
+  setTimeout(() => {
+    addMsg('Sabi ko na ehh crush mo ko😎… so bakit YES? HAHAHH ', 'left');
+    showReplies();
+  }, 1200);
+}
+
+function addMsg(text, side) {
+  const m = document.createElement('div');
+  m.className = `msg ${side}`;
+  m.innerText = text;
+  chat.appendChild(m);
+}
+
+function showReplies() {
+  const replies = [
+    'Because wala lang bat ba HAHAHA😜',
+    'Kasi ang cute mo hihi 😏',
+    'Kasi gusto ko lang 😎💖'
+  ];replies.forEach(t => {
+    const r = document.createElement('div');
+    r.className = 'reply';
+    r.innerText = t;
+    r.onclick = () => reply(t);
+    chat.appendChild(r);
+  });
+}
+
+function reply(text) {
+  document.querySelectorAll('.reply').forEach(e => e.remove());
+  addMsg(text,'right');
+
+  setTimeout(() => {
+    addMsg('Yesss! lezgooo 😆🎉', 'left');
+    setTimeout(() => {
+      addMsg('So… where should we go first? 💕', 'left');
+      date.classList.remove('hidden');
+    }, 1000);
+  }, 1000);
+}
+
+
+/* DATE */
+function chooseDate(d) {
+  dateChoice = d;
+  date.classList.add('hidden');
+  rainHearts();
+  finish();
+}
+
+/* HEART RAIN */
+function rainHearts() {
+  for (let i=0;i<50;i++){
+    const h=document.createElement('div');
+    h.className='heart';
+    h.style.left=Math.random()*100+'vw';
+    h.style.animationDuration=(Math.random()*2+3)+'s';
+    document.body.appendChild(h);
+  }
+}
+
+/* ENDING – HEARTFELT LETTER (PLACEHOLDER TEXT) */
+function finish(){
+  chat.classList.add('hidden');
+
+  // Secret endings
+  let secret = '';
+  if (noClicks === 0) secret = '\n\n';
+  if (hesitationScore > 6) secret = '\n\n';
+
+  ending.innerText = `Dear ${name},\n\nOkay, yes — this is a little cringey 😂💦  
+But if it made you smile even a little 😏💖, then I think it did its job!\n\n
+We haven’t known each other for long , but I’m super curious about you
+I want you to know I’m serious about getting to know you
+So if you’re up for it, let’s go on a few fun dates, laugh a lot , and see where things go 🚀💫.\n\n— from your super friend,  
+Redd 😎💌.${secret}`;
+}
+
+/* PWA SERVICE WORKER */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
